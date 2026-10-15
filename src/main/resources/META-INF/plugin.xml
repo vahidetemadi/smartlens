@@ -1,0 +1,63 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <id>com.vahid.plugin.SmartLens</id>
+    <name>SmartLens</name>
+    <vendor email="vetemadi87@gmail.com" url="https://github.com/vahidetemadi">Vahid Etemadi</vendor>
+
+    <description><![CDATA[
+    SmartLens helps developers who work with AI agents to understand, verify and learn from the code those agents produce.
+    <ul>
+      <li><b>Learn</b>: skills (APIs, language features, annotations) used by AI agents that never appear in your own commits.</li>
+      <li><b>Understand</b>: pending changes attributed to an AI agent, to you, or to both, ranked by review priority.</li>
+      <li><b>Risk</b>: hotspots that changed often, were largely written by AI and that you know little about.</li>
+    </ul>
+    Open it from <em>Tools | SmartLens</em>.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>Git4Idea</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="SmartLens"
+                    anchor="right"
+                    icon="/icons/smartLens.svg"
+                    canCloseContents="false"
+                    factoryClass="com.vahid.plugin.smartlens.UI.SmartLensToolWindowFactory"/>
+        <applicationConfigurable parentId="tools"
+                                 id="com.vahid.plugin.smartlens.config.SmartLensConfig"
+                                 instance="com.vahid.plugin.smartlens.config.SmartLensConfig"
+                                 displayName="SmartLens"/>
+        <notificationGroup id="SmartLens" displayType="BALLOON"/>
+        <editorFactoryDocumentListener implementation="com.vahid.plugin.smartlens.listener.DeveloperEditListener"/>
+    </extensions>
+
+    <projectListeners>
+        <listener class="com.vahid.plugin.smartlens.listener.ExternalChangeListener"
+                  topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+        <listener class="com.vahid.plugin.smartlens.listener.GitHeadChangeListener"
+                  topic="git4idea.repo.GitRepositoryChangeListener"/>
+    </projectListeners>
+
+    <actions>
+        <action id="com.vahid.plugin.smartlens.action.OpenSmartLensAction"
+                class="com.vahid.plugin.smartlens.action.OpenSmartLensAction"
+                text="SmartLens"
+                description="Open SmartLens: learn from, review and assess changes made by AI agents"
+                icon="/icons/smartLens.svg">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+
+        <group id="com.vahid.plugin.smartlens.group.Toolbar">
+            <action id="com.vahid.plugin.smartlens.action.RefreshSmartLensAction"
+                    class="com.vahid.plugin.smartlens.action.RefreshSmartLensAction"
+                    text="Refresh Analysis"
+                    description="Re-run the SmartLens analysis"
+                    icon="AllIcons.Actions.Refresh"/>
+            <action id="com.vahid.plugin.smartlens.action.ResetAttributionAction"
+                    class="com.vahid.plugin.smartlens.action.ResetAttributionAction"
+                    text="Reset Attribution"
+                    description="Forget which pending changes were made by AI agents and which by you"
+                    icon="AllIcons.Actions.GC"/>
+        </group>
+    </actions>
+</idea-plugin>

@@ -1,0 +1,110 @@
+/*
+ * Copyright (c) 2026 Vahid Etemadi
+ *
+ * Licensed under the Creative Commons Attribution-NoDerivatives 4.0 International License.
+ * You may share this work (copy and redistribute) under the terms of the license,
+ * but you may not remix, transform, or build upon it.
+ * To view a copy of the license, visit https://creativecommons.org/licenses/by-nd/4.0/
+ */
+package com.vahid.plugin.smartlens.UI;
+
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.table.TableView;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.ListTableModel;
+import com.vahid.plugin.smartlens.dto.SmartLensReportDto;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Common layout of the SmartLens tabs: toolbar, one-line summary and a sortable table.
+ * Double-clicking a row opens it via {@link #open(Object)}.
+ *
+ * @param <T> row type
+ */
+public abstract class ReportTablePanel<T> extends SimpleToolWindowPanel {
+    static final String TOOLBAR_GROUP_ID = "com.vahid.plugin.smartlens.group.Toolbar";
+
+    protected final Project project;
+    private final ListTableModel<T> model;
+    private final TableView<T> table;
+    private final JBLabel summaryLabel = new JBLabel();
+
+    protected ReportTablePanel(Project project, ColumnInfo<T, ?>[] columns, String emptyText) {
+        super(true, true);
+        this.project = project;
+        this.model = new ListTableModel<>(columns, new ArrayList<>(), 0);
+        this.model.setSortable(true);
+        this.table = new TableView<>(model);
+        this.table.getEmptyText().setText(emptyText);
+
+        new DoubleClickListener() {
+            @Override
+            protected boolean onDoubleClick(@NotNull MouseEvent event) {
+                T selected = table.getSelectedObject();
+                if (selected == null) {
+                    return false;
+                }
+                open(selected);
+                return true;
+            }
+        }.installOn(table);
+
+        summaryLabel.setBorder(JBUI.Borders.empty(4, 8));
+        JPanel content = new JPanel(new BorderLayout());
+        content.add(summaryLabel, BorderLayout.NORTH);
+        content.add(ScrollPaneFactory.createScrollPane(table), BorderLayout.CENTER);
+        setContent(content);
+
+        ActionGroup toolbarGroup = (ActionGroup) ActionManager.getInstance().getAction(TOOLBAR_GROUP_ID);
+        ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("SmartLensToolbar", toolbarGroup, true);
+        toolbar.setTargetComponent(this);
+        setToolbar(toolbar.getComponent());
+    }
+
+    public void showReport(SmartLensReportDto report) {
+        model.setItems(new ArrayList<>(rows(report)));
+        summaryLabel.setText(summary(report));
+    }
+
+    protected abstract List<T> rows(SmartLensReportDto report);
+
+    protected abstract String summary(SmartLensReportDto report);
+
+    protected abstract void open(T item);
+
+    protected static String displayPath(Project project, String path) {
+        String basePath = project.getBasePath();
+        if (basePath != null) {
+            String relative = FileUtil.getRelativePath(basePath, path, '/');
+            if (relative != null && !relative.startsWith("..")) {
+                return relative;
+            }
+        }
+        return path;
+    }
+
+    protected void openFile(String path) {
+        VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+        if (file != null) {
+            FileEditorManager.getInstance(project).openFile(file, true);
+        }
+    }
+}
