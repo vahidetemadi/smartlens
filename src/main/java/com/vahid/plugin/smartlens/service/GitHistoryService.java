@@ -75,6 +75,20 @@ public final class GitHistoryService {
         return GitLogParser.parseDiff(run(handler), repository.getRoot().getPath());
     }
 
+    /**
+     * @return absolute paths of untracked, non-ignored files (new files git diff cannot see)
+     */
+    public List<String> loadUntrackedFiles(GitRepository repository) throws VcsException {
+        GitLineHandler handler = handler(repository, GitCommand.LS_FILES);
+        handler.addParameters("--others", "--exclude-standard");
+        String root = repository.getRoot().getPath();
+        return run(handler).stream()
+                .filter(line -> !line.isBlank())
+                .map(line -> line.length() >= 2 && line.startsWith("\"") && line.endsWith("\"") ? line.substring(1, line.length() - 1) : line)
+                .map(relativePath -> root + "/" + relativePath)
+                .toList();
+    }
+
     public long headCommitEpochSeconds(GitRepository repository) throws VcsException {
         if (repository.isFresh()) {
             return 0L;

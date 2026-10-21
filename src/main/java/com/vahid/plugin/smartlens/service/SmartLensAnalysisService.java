@@ -10,17 +10,12 @@ package com.vahid.plugin.smartlens.service;
 
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.vahid.plugin.smartlens.UI.SmartLensNotifier;
 import com.vahid.plugin.smartlens.analysis.AgentMatcher;
 import com.vahid.plugin.smartlens.analysis.FeatureExtractor;
@@ -42,6 +37,7 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -66,7 +62,8 @@ public final class SmartLensAnalysisService {
     private static final int MAX_LEARNING_ITEMS = 200;
     private static final int MAX_HOTSPOTS = 100;
     private static final int MIN_HOTSPOT_COMMITS = 2;
-    private static final long MAX_UNVERSIONED_FILE_BYTES = 512 * 1024;
+    private static final long MAX_UNTRACKED_FILE_BYTES = 512 * 1024;
+    private static final int BINARY_PROBE_BYTES = 8 * 1024;
 
     private final Project project;
     private final AtomicBoolean running = new AtomicBoolean(false);
@@ -155,13 +152,15 @@ public final class SmartLensAnalysisService {
                         .ifPresent(email -> developerEmails.add(email.toLowerCase(Locale.ROOT)));
                 history.addAll(gitHistoryService.loadHistory(repository, settings.historyDepth));
                 pendingChanges.addAll(gitHistoryService.loadWorkingTreeChanges(repository));
+                pendingChanges.addAll(readUntrackedFiles(gitHistoryService.loadUntrackedFiles(repository)));
                 headTimeByRoot.put(root, gitHistoryService.headCommitEpochSeconds(repository));
             } catch (VcsException e) {
                 LOG.warn("Cannot read Git data of " + root, e);
             }
         }
         progressIndicator.checkCanceled();
-        pendingChanges.addAll(loadUnversionedFiles());
+        // The hook log is written by agents but is SmartLens data, not a change to review
+        hookLogFile(settings).ifPresent(hookLog -> pendingChanges.removeIf(change -> change.path().equals(hookLog)));
 
         // Attribution of pending changes: listeners + agent hook log
         progressIndicator.setText("Attributing pending changes");
@@ -276,25 +275,42 @@ public final class SmartLensAnalysisService {
     /**
      * New files are invisible to {@code git diff HEAD}; treat their whole content as added.
      */
-    private List<FileChangeDto> loadUnversionedFiles() {
-        List<FilePath> unversioned = ChangeListManager.getInstance(project).getUnversionedFilesPaths();
+    private static List<FileChangeDto> readUntrackedFiles(List<String> paths) {
         List<FileChangeDto> changes = new ArrayList<>();
-        for (FilePath filePath : unversioned) {
-            VirtualFile file = filePath.getVirtualFile();
-            if (file == null || file.isDirectory() || file.getLength() > MAX_UNVERSIONED_FILE_BYTES) {
-                continue;
-            }
-            boolean binary = ReadAction.nonBlocking(() -> file.getFileType().isBinary()).executeSynchronously();
-            if (binary) {
-                continue;
-            }
+        for (String path : paths) {
+            Path file = Path.of(path);
             try {
-                changes.add(new FileChangeDto(file.getPath(), VfsUtilCore.loadText(file).lines().toList(), 0));
+                if (!Files.isRegularFile(file) || Files.size(file) > MAX_UNTRACKED_FILE_BYTES) {
+                    continue;
+                }
+                byte[] content = Files.readAllBytes(file);
+                if (isBinary(content)) {
+                    continue;
+                }
+                changes.add(new FileChangeDto(path, new String(content, StandardCharsets.UTF_8).lines().toList(), 0));
             } catch (IOException e) {
-                LOG.debug("Cannot read unversioned file " + file.getPath(), e);
+                LOG.debug("Cannot read untracked file " + path, e);
             }
         }
         return changes;
+    }
+
+    private static boolean isBinary(byte[] content) {
+        int checked = Math.min(content.length, BINARY_PROBE_BYTES);
+        for (int i = 0; i < checked; i++) {
+            if (content[i] == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Optional<String> hookLogFile(SmartLensState settings) {
+        String basePath = project.getBasePath();
+        if (basePath == null || settings.hookLogPath.isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.of(Path.of(basePath).resolve(settings.hookLogPath).normalize().toString().replace('\\', '/'));
     }
 
     /**
