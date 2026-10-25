@@ -9,7 +9,9 @@ agent and which came from you. From that it shows three views:
 | **Understand** | Which pending changes should I review first? Double-click a row to open the diff. |
 | **Risk** | Which files changed often, were mostly written by AI, and are ones I barely know (regression hotspots)? |
 
-Open it from **Tools | SmartLens**. Settings are in **Settings | Tools | SmartLens**.
+Open it from **Tools | SmartLens**. Settings are in **Settings | Tools | SmartLens**. If you commit with several
+Git identities (e.g. a GitHub no-reply address), list them under *Your other Git e-mails* so your own commits count
+as yours.
 
 ## How attribution works
 
@@ -82,3 +84,14 @@ minus the features found in lines added by your own commits (matched by `git con
 ./gradlew buildPlugin   # build/distributions/SmartLens-<version>.zip
 ./gradlew verifyPlugin  # JetBrains Plugin Verifier
 ```
+
+## Releasing
+
+`CHANGELOG.md` is the single source of the release notes: its `[Unreleased]` section becomes the plugin's
+change notes (shown in the IDE and on the Marketplace).
+
+1. During development, add every user-visible change under `## [Unreleased]` (Added / Changed / Fixed / Removed).
+2. Keep `version` in `build.gradle.kts` at the *next* release (e.g. `0.2.0`) until you publish it.
+3. To release, run `./gradlew patchChangelog` (renames `[Unreleased]` to `[<version>] - <date>`), then
+   `./gradlew buildPlugin verifyPlugin`, commit, and tag `v<version>`.
+4. Bump `version` to the next release and start a new `[Unreleased]` section.

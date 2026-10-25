@@ -1,13 +1,15 @@
+import org.jetbrains.changelog.Changelog
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 plugins {
     id("java")
     id("org.jetbrains.intellij.platform") version "2.9.0"
     id("com.diffplug.spotless") version "6.25.0"
+    id("org.jetbrains.changelog") version "2.2.1"
 }
 
 group = "com.vahid.plugin"
-version = "0.1.0"
+version = "0.2.0"
 
 repositories {
     mavenCentral()
@@ -44,8 +46,24 @@ java {
     }
 }
 
+// CHANGELOG.md is the single source of the release notes shown in the IDE and on the Marketplace
+changelog {
+    groups.set(listOf("Added", "Changed", "Fixed", "Removed"))
+}
+
 intellijPlatform {
     pluginConfiguration {
+        val pluginVersion = project.version.toString()
+        changeNotes = provider {
+            with(changelog) {
+                renderItem(
+                    (getOrNull(pluginVersion) ?: getUnreleased())
+                        .withHeader(false)
+                        .withEmptySections(false),
+                    Changelog.OutputType.HTML,
+                )
+            }
+        }
         ideaVersion {
             sinceBuild = "251"
             untilBuild = provider { null }
