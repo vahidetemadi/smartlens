@@ -9,9 +9,12 @@
 package com.vahid.plugin.smartlens.UI;
 
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.Comparator;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
@@ -25,22 +28,26 @@ final class TableColumns {
     }
 
     static <T> ColumnInfo<T, String> text(String name, Function<T, String> value) {
-        return column(name, value, Comparator.comparing(value, String.CASE_INSENSITIVE_ORDER));
+        return column(name, value, Comparator.comparing(value, String.CASE_INSENSITIVE_ORDER), null);
     }
 
     static <T> ColumnInfo<T, String> number(String name, ToIntFunction<T> value) {
-        return column(name, item -> String.valueOf(value.applyAsInt(item)), Comparator.comparingInt(value));
+        return column(name, item -> String.valueOf(value.applyAsInt(item)), Comparator.comparingInt(value), "00000");
     }
 
     static <T> ColumnInfo<T, String> percent(String name, ToDoubleFunction<T> value) {
-        return column(name, item -> Math.round(value.applyAsDouble(item) * 100) + "%", Comparator.comparingDouble(value));
+        return column(name, item -> Math.round(value.applyAsDouble(item) * 100) + "%", Comparator.comparingDouble(value), "100%");
     }
 
     static <T> ColumnInfo<T, String> score(String name, ToDoubleFunction<T> value) {
-        return column(name, item -> String.format("%.1f", value.applyAsDouble(item)), Comparator.comparingDouble(value));
+        return column(name, item -> String.format("%.1f", value.applyAsDouble(item)), Comparator.comparingDouble(value), "100.0");
     }
 
-    private static <T> ColumnInfo<T, String> column(String name, Function<T, String> value, Comparator<T> comparator) {
+    /**
+     * @param preferredValue sample value giving numeric columns a fixed width, null to share the remaining width
+     */
+    private static <T> ColumnInfo<T, String> column(String name, Function<T, String> value, Comparator<T> comparator,
+                                                    @Nullable String preferredValue) {
         return new ColumnInfo<>(name) {
             @Override
             public @Nullable String valueOf(T item) {
@@ -50,6 +57,15 @@ final class TableColumns {
             @Override
             public @NotNull Comparator<T> getComparator() {
                 return comparator;
+            }
+
+            @Override
+            public int getWidth(JTable table) {
+                if (preferredValue == null) {
+                    return super.getWidth(table);
+                }
+                FontMetrics metrics = table.getFontMetrics(table.getFont());
+                return Math.max(metrics.stringWidth(name), metrics.stringWidth(preferredValue)) + JBUI.scale(20);
             }
         };
     }

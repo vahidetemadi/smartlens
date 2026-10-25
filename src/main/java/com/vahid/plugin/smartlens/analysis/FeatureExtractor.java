@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,6 +28,7 @@ import java.util.regex.Pattern;
 public final class FeatureExtractor {
     private static final Pattern IMPORT_PATTERN = Pattern.compile(
             "^\\s*import\\s+(?:static\\s+)?([\\w.]+?)(?:\\.\\*)?(?:\\s+as\\s+\\w+)?\\s*;?\\s*$");
+    private static final Pattern PACKAGE_PATTERN = Pattern.compile("^\\s*package\\s+([\\w.]+)\\s*;?\\s*$");
     private static final Pattern ANNOTATION_PATTERN = Pattern.compile("(?<![\\w.@\"])@([A-Z]\\w*)");
     private static final Set<String> TRIVIAL_ANNOTATIONS = Set.of("Override", "Deprecated", "SuppressWarnings");
     private static final Map<String, LanguageFeature> LANGUAGE_FEATURES = new LinkedHashMap<>();
@@ -125,6 +127,14 @@ public final class FeatureExtractor {
             }
         });
         return features;
+    }
+
+    /**
+     * @return the package declared by the line ({@code package a.b;}), if any
+     */
+    public Optional<String> declaredPackage(String line) {
+        Matcher matcher = PACKAGE_PATTERN.matcher(line);
+        return matcher.matches() ? Optional.of(matcher.group(1)) : Optional.empty();
     }
 
     public String describe(FeatureDto feature) {

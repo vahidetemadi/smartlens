@@ -50,9 +50,13 @@ public abstract class ReportTablePanel<T> extends SimpleToolWindowPanel {
     protected ReportTablePanel(Project project, ColumnInfo<T, ?>[] columns, String emptyText) {
         super(true, true);
         this.project = project;
-        this.model = new ListTableModel<>(columns, new ArrayList<>(), 0);
+        // No default sort column: rows keep the ranking computed by the analysis until the user sorts
+        this.model = new ListTableModel<>(columns, new ArrayList<>());
         this.model.setSortable(true);
         this.table = new TableView<>(model);
+        if (table.getRowSorter() != null) {
+            table.getRowSorter().setSortKeys(null);
+        }
         this.table.getEmptyText().setText(emptyText);
 
         new DoubleClickListener() {
@@ -90,15 +94,20 @@ public abstract class ReportTablePanel<T> extends SimpleToolWindowPanel {
 
     protected abstract void open(T item);
 
+    /**
+     * @return "Name.ext · relative/directory", so that the file name stays visible when the column is narrow
+     */
     protected static String displayPath(Project project, String path) {
+        String shown = path;
         String basePath = project.getBasePath();
         if (basePath != null) {
             String relative = FileUtil.getRelativePath(basePath, path, '/');
             if (relative != null && !relative.startsWith("..")) {
-                return relative;
+                shown = relative;
             }
         }
-        return path;
+        int lastSlash = shown.lastIndexOf('/');
+        return lastSlash < 0 ? shown : shown.substring(lastSlash + 1) + " · " + shown.substring(0, lastSlash);
     }
 
     protected void openFile(String path) {

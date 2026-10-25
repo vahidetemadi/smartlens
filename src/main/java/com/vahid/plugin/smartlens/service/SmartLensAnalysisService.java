@@ -137,7 +137,7 @@ public final class SmartLensAnalysisService {
             throw new IllegalStateException("No Git repository found in this project.");
         }
 
-        Set<String> developerEmails = new HashSet<>();
+        Set<String> developerEmails = new HashSet<>(settings.developerAliasSet());
         List<CommitInfoDto> history = new ArrayList<>();
         List<FileChangeDto> pendingChanges = new ArrayList<>();
         Map<String, Long> headTimeByRoot = new HashMap<>();
@@ -234,6 +234,7 @@ public final class SmartLensAnalysisService {
     private List<HotspotDto> hotspots(Map<String, FileHistoryStats> statsByPath, Map<String, ChangeOrigin> pendingOrigins) {
         List<FileHistoryStats> candidates = statsByPath.values().stream()
                 .filter(stats -> stats.getCommits() >= MIN_HOTSPOT_COMMITS)
+                .filter(stats -> RiskScorer.isRiskRelevant(stats.getPath()))
                 .filter(stats -> Files.isRegularFile(Path.of(stats.getPath())))
                 .toList();
         int maxCommits = candidates.stream().mapToInt(FileHistoryStats::getCommits).max().orElse(0);

@@ -68,6 +68,13 @@ tasks {
     test {
         useJUnitPlatform()
         jvmArgs("-ea")
+        // Opt-in studies (see src/test/java/com/vahid/plugin/smartlens/study), e.g. -Psmartlens.study.repos=/a,/b
+        val studyKeys = listOf("smartlens.study.repos", "smartlens.study.attribution", "smartlens.study.screenshotRepo")
+        val studyProperties = studyKeys.mapNotNull { key -> providers.gradleProperty(key).orNull?.let { key to it } }
+        studyProperties.forEach { (key, value) -> systemProperty(key, value) }
+        if (studyProperties.isEmpty()) {
+            exclude("**/study/**")
+        }
     }
 
     runIde {

@@ -33,6 +33,7 @@ public final class SmartLensState implements PersistentStateComponent<SmartLensS
     public String agentPatterns = DEFAULT_AGENT_PATTERNS;
     public String hookLogPath = DEFAULT_HOOK_LOG_PATH;
     public String codeExtensions = DEFAULT_CODE_EXTENSIONS;
+    public String developerAliases = "";
     public int historyDepth = 300;
     public int vcsQuietSeconds = 5;
 
@@ -51,9 +52,20 @@ public final class SmartLensState implements PersistentStateComponent<SmartLensS
     }
 
     public Set<String> codeExtensionSet() {
-        return Arrays.stream(codeExtensions.split(","))
+        return commaSeparated(codeExtensions);
+    }
+
+    /**
+     * @return other Git e-mail addresses of the developer, lower-cased (commits made from other machines or accounts)
+     */
+    public Set<String> developerAliasSet() {
+        return commaSeparated(developerAliases.toLowerCase(java.util.Locale.ROOT));
+    }
+
+    private static Set<String> commaSeparated(String value) {
+        return Arrays.stream(value.split(","))
                 .map(String::trim)
-                .filter(extension -> !extension.isEmpty())
+                .filter(item -> !item.isEmpty())
                 .collect(Collectors.toSet());
     }
 }

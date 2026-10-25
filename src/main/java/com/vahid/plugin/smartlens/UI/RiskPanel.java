@@ -42,8 +42,15 @@ public class RiskPanel extends ReportTablePanel<HotspotDto> {
     @Override
     protected String summary(SmartLensReportDto report) {
         return String.format("Top %d hotspots from the last %d commits (developer: %s)",
-                report.hotspots().size(), report.analyzedCommits(),
-                report.developerEmails().isEmpty() ? "unknown" : String.join(", ", report.developerEmails()));
+                report.hotspots().size(), report.analyzedCommits(), developer(report));
+    }
+
+    private static String developer(SmartLensReportDto report) {
+        List<String> emails = report.developerEmails().stream().sorted().toList();
+        if (emails.isEmpty()) {
+            return "unknown";
+        }
+        return emails.size() == 1 ? emails.get(0) : emails.get(0) + " +" + (emails.size() - 1) + " aliases";
     }
 
     @Override

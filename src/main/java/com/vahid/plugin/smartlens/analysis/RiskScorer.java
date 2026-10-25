@@ -28,6 +28,16 @@ public final class RiskScorer {
     private RiskScorer() {
     }
 
+    /**
+     * Dotfiles (e.g. .gitignore) and Markdown documents change often but cannot regress behaviour.
+     *
+     * @return whether the file should be considered as a hotspot
+     */
+    public static boolean isRiskRelevant(String path) {
+        String name = path.substring(path.lastIndexOf('/') + 1);
+        return !name.startsWith(".") && !name.toLowerCase(java.util.Locale.ROOT).endsWith(".md");
+    }
+
     public static double churn(int commits, int maxCommits) {
         if (commits <= 0 || maxCommits <= 0) {
             return 0.0;

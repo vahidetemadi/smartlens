@@ -10,6 +10,7 @@ package com.vahid.plugin.smartlens.analysis;
 
 import com.vahid.plugin.smartlens.dto.FeatureDto;
 import com.vahid.plugin.smartlens.dto.LearningItemDto;
+import com.vahid.plugin.smartlens.value.FeatureCategory;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -20,12 +21,13 @@ import java.util.Set;
 
 /**
  * Compares the skills an AI agent used with the developer's own vocabulary (built from their commits)
- * and reports the ones that are new to the developer.
+ * and reports the ones that are new to the developer. Imports of the project's own packages are not skills.
  */
 public final class LearningAnalyzer {
     private final FeatureExtractor featureExtractor;
     private final Set<FeatureDto> developerVocabulary = new HashSet<>();
     private final Map<FeatureDto, AgentUsage> agentUsages = new HashMap<>();
+    private final Set<String> projectPackages = new HashSet<>();
 
     public LearningAnalyzer(FeatureExtractor featureExtractor) {
         this.featureExtractor = featureExtractor;
@@ -33,6 +35,7 @@ public final class LearningAnalyzer {
 
     public void addDeveloperLines(String path, List<String> lines) {
         if (featureExtractor.isCodeFile(path)) {
+            collectPackages(lines);
             developerVocabulary.addAll(featureExtractor.extract(lines));
         }
     }
@@ -41,6 +44,7 @@ public final class LearningAnalyzer {
         if (!featureExtractor.isCodeFile(path)) {
             return;
         }
+        collectPackages(lines);
         for (String line : lines) {
             for (FeatureDto feature : featureExtractor.extract(line)) {
                 // Keep the first example found; history is processed newest first
@@ -60,6 +64,7 @@ public final class LearningAnalyzer {
     public List<LearningItemDto> novelItems(int limit) {
         return agentUsages.entrySet().stream()
                 .filter(entry -> !developerVocabulary.contains(entry.getKey()))
+                .filter(entry -> !isProjectImport(entry.getKey()))
                 .sorted(Comparator.<Map.Entry<FeatureDto, AgentUsage>>comparingInt(entry -> entry.getValue().occurrences)
                         .reversed()
                         .thenComparing(entry -> entry.getKey().name()))
@@ -72,6 +77,15 @@ public final class LearningAnalyzer {
                         entry.getValue().examplePath,
                         entry.getValue().source))
                 .toList();
+    }
+
+    private void collectPackages(List<String> lines) {
+        lines.forEach(line -> featureExtractor.declaredPackage(line).ifPresent(projectPackages::add));
+    }
+
+    private boolean isProjectImport(FeatureDto feature) {
+        return feature.category() == FeatureCategory.LIBRARY_API
+                && projectPackages.stream().anyMatch(projectPackage -> feature.name().startsWith(projectPackage + "."));
     }
 
     private static final class AgentUsage {

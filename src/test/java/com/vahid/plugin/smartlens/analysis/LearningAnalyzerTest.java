@@ -39,4 +39,19 @@ class LearningAnalyzerTest {
         assertThat(items.get(0).source()).isEqualTo("commit abc");
         assertThat(analyzer.novelItems(1)).hasSize(1);
     }
+
+    @Test
+    void test_given_importOfProjectPackage_when_novelItemsRequested_then_itIsNotASkill() {
+        LearningAnalyzer analyzer = new LearningAnalyzer(new FeatureExtractor(Set.of("java", "kt")));
+        analyzer.addDeveloperLines("/r/Dev.java", List.of("package com.acme.core;"));
+        analyzer.addAgentLines("/r/data/Track.kt", List.of("package com.acme.data"), "commit abc");
+        analyzer.addAgentLines("/r/Ai.java", List.of(
+                "import com.acme.data.TrackPoint;",
+                "import com.acme.core.Engine;",
+                "import com.acmeother.Lib;",
+                "import java.time.Duration;"), "commit abc");
+
+        assertThat(analyzer.novelItems(10)).extracting(LearningItemDto::feature)
+                .containsExactlyInAnyOrder("com.acmeother.Lib", "java.time.Duration");
+    }
 }

@@ -60,6 +60,14 @@ class ScoringTest {
     }
 
     @Test
+    void test_given_paths_when_checkedForRisk_then_dotfilesAndMarkdownAreSkipped() {
+        assertThat(RiskScorer.isRiskRelevant("/r/src/Main.java")).isTrue();
+        assertThat(RiskScorer.isRiskRelevant("/r/build.gradle.kts")).isTrue();
+        assertThat(RiskScorer.isRiskRelevant("/r/.gitignore")).isFalse();
+        assertThat(RiskScorer.isRiskRelevant("/r/docs/README.MD")).isFalse();
+    }
+
+    @Test
     void test_given_identities_when_matched_then_trailersAndAuthorsAreDetectedCaseInsensitively() {
         AgentMatcher matcher = AgentMatcher.fromCommaSeparated(" Claude , copilot,,");
 

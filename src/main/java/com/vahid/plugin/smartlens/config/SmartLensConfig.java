@@ -24,6 +24,7 @@ public class SmartLensConfig implements Configurable {
     private JBTextField agentPatternsField;
     private JBTextField hookLogPathField;
     private JBTextField codeExtensionsField;
+    private JBTextField developerAliasesField;
     private JBIntSpinner historyDepthSpinner;
     private JBIntSpinner vcsQuietSecondsSpinner;
 
@@ -37,6 +38,7 @@ public class SmartLensConfig implements Configurable {
         agentPatternsField = new JBTextField();
         hookLogPathField = new JBTextField();
         codeExtensionsField = new JBTextField();
+        developerAliasesField = new JBTextField();
         historyDepthSpinner = new JBIntSpinner(300, 10, 10_000, 50);
         vcsQuietSecondsSpinner = new JBIntSpinner(5, 0, 120);
 
@@ -45,6 +47,8 @@ public class SmartLensConfig implements Configurable {
                 .addComponentToRightColumn(comment("Matched against commit author and Co-authored-by trailers."))
                 .addLabeledComponent("Agent hook log (relative to project):", hookLogPathField)
                 .addComponentToRightColumn(comment("JSON lines {\"file\", \"agent\", \"ts\"} appended by agent hooks."))
+                .addLabeledComponent("Your other Git e-mails (comma separated):", developerAliasesField)
+                .addComponentToRightColumn(comment("Besides git config user.email; used to recognize your own commits."))
                 .addLabeledComponent("Code file extensions:", codeExtensionsField)
                 .addLabeledComponent("Commits to analyze:", historyDepthSpinner)
                 .addLabeledComponent("Ignore disk changes after Git operations (seconds):", vcsQuietSecondsSpinner)
@@ -60,6 +64,7 @@ public class SmartLensConfig implements Configurable {
         return !agentPatternsField.getText().equals(state.agentPatterns)
                 || !hookLogPathField.getText().equals(state.hookLogPath)
                 || !codeExtensionsField.getText().equals(state.codeExtensions)
+                || !developerAliasesField.getText().equals(state.developerAliases)
                 || historyDepthSpinner.getNumber() != state.historyDepth
                 || vcsQuietSecondsSpinner.getNumber() != state.vcsQuietSeconds;
     }
@@ -70,6 +75,7 @@ public class SmartLensConfig implements Configurable {
         state.agentPatterns = agentPatternsField.getText().trim();
         state.hookLogPath = hookLogPathField.getText().trim();
         state.codeExtensions = codeExtensionsField.getText().trim();
+        state.developerAliases = developerAliasesField.getText().trim();
         state.historyDepth = historyDepthSpinner.getNumber();
         state.vcsQuietSeconds = vcsQuietSecondsSpinner.getNumber();
     }
@@ -80,6 +86,7 @@ public class SmartLensConfig implements Configurable {
         agentPatternsField.setText(state.agentPatterns);
         hookLogPathField.setText(state.hookLogPath);
         codeExtensionsField.setText(state.codeExtensions);
+        developerAliasesField.setText(state.developerAliases);
         historyDepthSpinner.setNumber(state.historyDepth);
         vcsQuietSecondsSpinner.setNumber(state.vcsQuietSeconds);
     }
@@ -90,6 +97,7 @@ public class SmartLensConfig implements Configurable {
         agentPatternsField = null;
         hookLogPathField = null;
         codeExtensionsField = null;
+        developerAliasesField = null;
         historyDepthSpinner = null;
         vcsQuietSecondsSpinner = null;
     }
