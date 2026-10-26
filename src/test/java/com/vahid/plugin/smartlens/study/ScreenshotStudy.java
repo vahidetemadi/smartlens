@@ -30,7 +30,7 @@ public class ScreenshotStudy extends SmartLensRepositoryTestCase {
     private static final String IMPL = "src/main/java/com/github/gilbertotcc/lifx/impl/";
     private static final String DEVELOPER_ALIASES = "gilbertotcc@users.noreply.github.com,9193796+gilbertotcc@users.noreply.github.com";
     private static final int WIDTH = 1000;
-    private static final java.util.Map<String, Integer> HEIGHTS = java.util.Map.of("Learn", 262, "Understand", 128, "Risk", 228);
+    private static final java.util.Map<String, Integer> HEIGHTS = java.util.Map.of("Overview", 390, "Learn", 262, "Understand", 100, "Risk", 228);
     private static final int SCALE = 2;
 
     @Override

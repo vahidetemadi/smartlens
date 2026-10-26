@@ -18,6 +18,7 @@ import com.vahid.plugin.smartlens.listener.SmartLensReportListener;
 import com.vahid.plugin.smartlens.service.SmartLensAnalysisService;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.List;
 
 public class SmartLensToolWindowFactory implements ToolWindowFactory, DumbAware {
@@ -25,13 +26,15 @@ public class SmartLensToolWindowFactory implements ToolWindowFactory, DumbAware 
 
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-        List<ReportTablePanel<?>> panels = List.of(new LearnPanel(project), new UnderstandPanel(project), new RiskPanel(project));
-        List<String> titles = List.of("Learn", "Understand", "Risk");
+        // Overview (charts) first; the table tabs keep exact values, sorting and open-on-double-click
+        List<ReportView> panels = List.of(new OverviewPanel(project), new LearnPanel(project),
+                new UnderstandPanel(project), new RiskPanel(project));
+        List<String> titles = List.of("Overview", "Learn", "Understand", "Risk");
 
         ContentManager contentManager = toolWindow.getContentManager();
         ContentFactory contentFactory = ContentFactory.getInstance();
         for (int i = 0; i < panels.size(); i++) {
-            contentManager.addContent(contentFactory.createContent(panels.get(i), titles.get(i), false));
+            contentManager.addContent(contentFactory.createContent((JComponent) panels.get(i), titles.get(i), false));
         }
 
         project.getMessageBus().connect(toolWindow.getDisposable()).subscribe(SmartLensReportListener.TOPIC,

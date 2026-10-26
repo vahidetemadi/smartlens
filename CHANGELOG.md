@@ -8,6 +8,9 @@ The `[Unreleased]` section is shown as the plugin's change notes and is renamed 
 ## [Unreleased]
 
 ### Added
+- Overview tab: a dashboard with headline numbers, pending changes by origin, the new skills agents used most, and a
+  hotspot map (commits vs. share written by AI, bubble size = risk). Charts have tooltips and open files on click;
+  the Learn, Understand and Risk tables remain for exact values and sorting.
 - Settings: "Your other Git e-mails" to recognize your own commits made with other identities (e.g. GitHub no-reply addresses).
 - End-to-end test that runs the plugin in a headless IDE against a real Git repository.
 - Opt-in studies (attribution scenarios, mining of open-source repositories, tool-window renderer), excluded from the default test run.

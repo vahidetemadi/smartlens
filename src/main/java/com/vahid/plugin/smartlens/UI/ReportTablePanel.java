@@ -39,7 +39,7 @@ import java.util.List;
  *
  * @param <T> row type
  */
-public abstract class ReportTablePanel<T> extends SimpleToolWindowPanel {
+public abstract class ReportTablePanel<T> extends SimpleToolWindowPanel implements ReportView {
     static final String TOOLBAR_GROUP_ID = "com.vahid.plugin.smartlens.group.Toolbar";
 
     protected final Project project;
@@ -77,12 +77,20 @@ public abstract class ReportTablePanel<T> extends SimpleToolWindowPanel {
         content.add(ScrollPaneFactory.createScrollPane(table), BorderLayout.CENTER);
         setContent(content);
 
-        ActionGroup toolbarGroup = (ActionGroup) ActionManager.getInstance().getAction(TOOLBAR_GROUP_ID);
-        ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("SmartLensToolbar", toolbarGroup, true);
-        toolbar.setTargetComponent(this);
-        setToolbar(toolbar.getComponent());
+        setToolbar(createToolbar(this));
     }
 
+    /**
+     * @return the SmartLens toolbar (Refresh, Reset Attribution) bound to the given tab
+     */
+    static JComponent createToolbar(JComponent target) {
+        ActionGroup toolbarGroup = (ActionGroup) ActionManager.getInstance().getAction(TOOLBAR_GROUP_ID);
+        ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("SmartLensToolbar", toolbarGroup, true);
+        toolbar.setTargetComponent(target);
+        return toolbar.getComponent();
+    }
+
+    @Override
     public void showReport(SmartLensReportDto report) {
         model.setItems(new ArrayList<>(rows(report)));
         summaryLabel.setText(summary(report));
@@ -111,6 +119,10 @@ public abstract class ReportTablePanel<T> extends SimpleToolWindowPanel {
     }
 
     protected void openFile(String path) {
+        openFile(project, path);
+    }
+
+    static void openFile(Project project, String path) {
         VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
         if (file != null) {
             FileEditorManager.getInstance(project).openFile(file, true);

@@ -144,11 +144,19 @@ public class SmartLensEndToEndTest extends SmartLensRepositoryTestCase {
         // Tool window: the factory registered in plugin.xml builds three tabs and renders the last report
         ToolWindowHeadlessManagerImpl.MockToolWindow toolWindow = new ToolWindowHeadlessManagerImpl.MockToolWindow(getProject());
         new SmartLensToolWindowFactory().createToolWindowContent(getProject(), toolWindow);
-        assertEquals(List.of("Learn", "Understand", "Risk"), Arrays.stream(toolWindow.getContentManager().getContents())
+        assertEquals(List.of("Overview", "Learn", "Understand", "Risk"), Arrays.stream(toolWindow.getContentManager().getContents())
                 .map(Content::getDisplayName).toList());
-        assertEquals(report.learningItems().size(), rowCount(toolWindow, 0));
-        assertEquals(report.reviewItems().size(), rowCount(toolWindow, 1));
-        assertEquals(report.hotspots().size(), rowCount(toolWindow, 2));
+        assertEquals(report.learningItems().size(), rowCount(toolWindow, 1));
+        assertEquals(report.reviewItems().size(), rowCount(toolWindow, 2));
+        assertEquals(report.hotspots().size(), rowCount(toolWindow, 3));
+        // The Overview dashboard paints its charts from the same report without errors
+        javax.swing.JComponent overview = toolWindow.getContentManager().getContents()[0].getComponent();
+        overview.setSize(1000, 480);
+        layoutRecursively(overview);
+        java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(1000, 480, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        java.awt.Graphics2D graphics = image.createGraphics();
+        overview.printAll(graphics);
+        graphics.dispose();
     }
 
     public void test_given_pluginXml_when_loaded_then_actionsAndSettingsAreRegistered() {
@@ -163,6 +171,15 @@ public class SmartLensEndToEndTest extends SmartLensRepositoryTestCase {
         assertFalse(config.isModified());
         config.apply();
         config.disposeUIResources();
+    }
+
+    private static void layoutRecursively(java.awt.Component component) {
+        component.doLayout();
+        if (component instanceof java.awt.Container container) {
+            for (java.awt.Component child : container.getComponents()) {
+                layoutRecursively(child);
+            }
+        }
     }
 
     private static int rowCount(@NotNull ToolWindowHeadlessManagerImpl.MockToolWindow toolWindow, int tab) {
