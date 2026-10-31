@@ -95,3 +95,7 @@ change notes (shown in the IDE and on the Marketplace).
 3. To release, run `./gradlew patchChangelog` (renames `[Unreleased]` to `[<version>] - <date>`), then
    `./gradlew buildPlugin verifyPlugin`, commit, and tag `v<version>`.
 4. Bump `version` to the next release and start a new `[Unreleased]` section.
+
+## License
+
+SmartLens is licensed under the [Apache License, Version 2.0](LICENSE).

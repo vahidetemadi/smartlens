@@ -16,6 +16,7 @@ The `[Unreleased]` section is shown as the plugin's change notes and is renamed 
 - Opt-in studies (attribution scenarios, mining of open-source repositories, tool-window renderer), excluded from the default test run.
 
 ### Changed
+- Licensed under the Apache License, Version 2.0 (previously CC BY-ND 4.0 headers).
 - Tables keep the ranking computed by the analysis (highest priority/risk first) until a column header is clicked.
 - File columns show the file name first, then its directory; numeric columns use a fixed, compact width.
 - Untracked files are read directly from Git, so files an agent has just created show up immediately.
