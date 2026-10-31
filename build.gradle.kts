@@ -72,7 +72,15 @@ intellijPlatform {
 
     pluginVerification {
         ides {
-            create("IC", "2025.1")
+            // Default: latest patch of every release since sinceBuild. IntelliJ IDEA Community ended with 2025.2;
+            // from 2025.3 on there is only the unified IntelliJ IDEA distribution (product code IU).
+            // Override with e.g. -Psmartlens.verifyIdes=IU-2026.2.4 (comma separated) to verify a subset.
+            val verifyIdes = providers.gradleProperty("smartlens.verifyIdes").orNull
+                ?: "IC-2025.1.7,IC-2025.2.6,IU-2025.3,IU-2026.1.5.1,IU-2026.2.4"
+            verifyIdes.split(",").map { it.trim() }.filter { it.isNotEmpty() }.forEach { ide ->
+                val (type, ideVersion) = ide.split("-", limit = 2)
+                create(type, ideVersion)
+            }
         }
     }
 }

@@ -6,12 +6,20 @@
 
     <description><![CDATA[
     SmartLens helps developers who work with AI agents to understand, verify and learn from the code those agents produce.
+    It tells which uncommitted changes were made by an AI agent, by you, or by both, and combines this with your Git history.
     <ul>
+      <li><b>Overview</b>: a dashboard with headline numbers, pending changes by origin, the new skills agents used most,
+          and a hotspot map (churn vs. share written by AI, bubble size = risk).</li>
       <li><b>Learn</b>: skills (APIs, language features, annotations) used by AI agents that never appear in your own commits.</li>
-      <li><b>Understand</b>: pending changes attributed to an AI agent, to you, or to both, ranked by review priority.</li>
+      <li><b>Understand</b>: pending changes attributed to an AI agent, to you, or to both, ranked by review priority,
+          with the diff one double-click away.</li>
       <li><b>Risk</b>: hotspots that changed often, were largely written by AI and that you know little about.</li>
     </ul>
-    Open it from <em>Tools | SmartLens</em>.
+    Open it from <em>Tools | SmartLens</em>; settings are in <em>Settings | Tools | SmartLens</em>.
+    <br/><br/>
+    Works with any AI agent that edits files on disk (e.g. Claude Code, Codex, Aider) and with <code>Co-authored-by</code>
+    commit trailers. An optional agent hook log makes attribution precise. Requires a Git repository.
+    Everything runs locally: SmartLens makes no network calls and collects no data.
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
