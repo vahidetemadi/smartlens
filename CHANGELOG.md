@@ -5,9 +5,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), new
 The `[Unreleased]` section is shown as the plugin's change notes and is renamed to the version on release
 (`./gradlew patchChangelog`).
 
-## [Unreleased]
+## Unreleased
 
 ### Added
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## 0.2.0 - 2026-11-01
+
+### Added
+
 - Overview tab: a dashboard with headline numbers, pending changes by origin, the new skills agents used most, and a
   hotspot map (commits vs. share written by AI, bubble size = risk). Charts have tooltips and open files on click;
   the Learn, Understand and Risk tables remain for exact values and sorting.
@@ -16,6 +27,7 @@ The `[Unreleased]` section is shown as the plugin's change notes and is renamed 
 - Opt-in studies (attribution scenarios, mining of open-source repositories, tool-window renderer), excluded from the default test run.
 
 ### Changed
+
 - Licensed under the Apache License, Version 2.0 (previously CC BY-ND 4.0 headers).
 - Tables keep the ranking computed by the analysis (highest priority/risk first) until a column header is clicked.
 - File columns show the file name first, then its directory; numeric columns use a fixed, compact width.
@@ -25,13 +37,15 @@ The `[Unreleased]` section is shown as the plugin's change notes and is renamed 
 - Risk summary shows the primary developer e-mail and the number of aliases instead of every address.
 
 ### Fixed
+
 - Understand and Risk listed the lowest priority/risk first.
 - New files created by an agent were missing from Understand until the IDE's change list refreshed.
 - The agent hook log (`.smartlens/agent-edits.jsonl`) appeared as an agent change when it was not git-ignored.
 
-## [0.1.0] - 2026-10-15
+## 0.1.0 - 2026-10-15
 
 ### Added
+
 - Attribution of pending changes to an AI agent, the developer, or both, from external file changes, editor edits,
   an optional agent hook log, and `Co-authored-by` trailers in the Git history.
 - SmartLens tool window (Tools | SmartLens) with three tabs: Learn, Understand and Risk.
