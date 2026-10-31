@@ -33,9 +33,8 @@ import java.nio.file.Path;
  * Run with {@code ./gradlew test --tests '*ScreenshotStudy*' -Psmartlens.study.screenshotRepo=/path/to/clone}.
  */
 public class ScreenshotStudy extends SmartLensRepositoryTestCase {
-    private static final String DEVELOPER_EMAIL = "gilberto.taccari@gmail.com";
     private static final String IMPL = "src/main/java/com/github/gilbertotcc/lifx/impl/";
-    private static final String DEVELOPER_ALIASES = "gilbertotcc@users.noreply.github.com,9193796+gilbertotcc@users.noreply.github.com";
+    private static final java.util.regex.Pattern BOT = java.util.regex.Pattern.compile("(?i)\\[bot]|\\bbot\\b|circleci|github-actions");
     private static final int WIDTH = 1000;
     private static final java.util.Map<String, Integer> HEIGHTS = java.util.Map.of("Overview", 390, "Learn", 262, "Understand", 100, "Risk", 228);
     private static final int SCALE = 2;
@@ -43,14 +42,41 @@ public class ScreenshotStudy extends SmartLensRepositoryTestCase {
     @Override
     protected void createRepository() throws Exception {
         git("clone", "-q", System.getProperty("smartlens.study.screenshotRepo"), ".");
-        git("config", "user.email", DEVELOPER_EMAIL);
+        // The developer persona is the most active human author of the clone (no e-mail addresses in the code)
+        developerEmails = personaEmails();
+        git("config", "user.email", developerEmails.get(0));
         write(".git/info/exclude", ".idea/\n*.iml\n*.ipr\n*.iws\n");
+    }
+
+    private java.util.List<String> developerEmails;
+
+    /**
+     * @return e-mails of the most active human author, most used first (the first one acts as git user.email)
+     */
+    private java.util.List<String> personaEmails() throws Exception {
+        Process process = new ProcessBuilder("git", "log", "--no-merges", "--format=%an%x1f%ae")
+                .directory(base.toFile()).redirectErrorStream(true).start();
+        java.util.List<String[]> authors = new String(process.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8)
+                .lines().map(line -> line.split("\u001F", 2)).filter(parts -> parts.length == 2)
+                .filter(parts -> !BOT.matcher(parts[0] + " " + parts[1]).find())
+                .toList();
+        assertTrue("git log timed out", process.waitFor(60, java.util.concurrent.TimeUnit.SECONDS));
+        String persona = authors.stream()
+                .collect(java.util.stream.Collectors.groupingBy(parts -> parts[0].toLowerCase(java.util.Locale.ROOT), java.util.stream.Collectors.counting()))
+                .entrySet().stream().max(java.util.Map.Entry.comparingByValue()).orElseThrow().getKey();
+        return authors.stream()
+                .filter(parts -> parts[0].toLowerCase(java.util.Locale.ROOT).equals(persona))
+                .collect(java.util.stream.Collectors.groupingBy(parts -> parts[1].toLowerCase(java.util.Locale.ROOT), java.util.stream.Collectors.counting()))
+                .entrySet().stream()
+                .sorted(java.util.Map.Entry.<String, Long>comparingByValue().reversed())
+                .map(java.util.Map.Entry::getKey)
+                .toList();
     }
 
     public void test_renderToolWindow() throws Exception {
         com.vahid.plugin.smartlens.config.SmartLensState settings = com.vahid.plugin.smartlens.config.SmartLensState.getInstance();
         String previousAliases = settings.developerAliases;
-        settings.developerAliases = DEVELOPER_ALIASES;
+        settings.developerAliases = String.join(",", developerEmails.subList(1, developerEmails.size()));
         try {
             renderToolWindow();
         } finally {
